@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Proposal: LTV Unity All-Electric Conversion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Desert Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed with a top-down, thematic structure, allowing users to dive into any of the four core pillars of the conversion (Suspension, Electrical, Climate, Fabrication) via a sticky navigation bar. This non-linear approach is chosen for usability, as a client might be more interested in the electrical system than the suspension, or vice-versa. Within each section, complex data (like weight changes and power needs) are visualized with interactive charts. Component comparisons are presented in side-by-side cards for easy analysis. This structure transforms a dense report into a digestible, explorable dashboard, prioritizing user understanding and engagement over the report's linear format. -->
+    <!-- Visualization & Content Choices: 
+        1. Weight Balance (Bar Chart): Report Info -> Estimated weights of removed/added components. Goal -> Compare the two totals visually. Viz -> Bar chart (Chart.js). Interaction -> Hover for details. Justification -> More impactful than a simple text list of numbers. Library -> Chart.js.
+        2. Power Audit (Doughnut Chart): Report Info -> Daily power consumption breakdown. Goal -> Show proportional energy use. Viz -> Doughnut chart (Chart.js). Interaction -> Toggle between 'Base' and 'Max' load, updating the chart. Justification -> Effectively visualizes the ares of highest consumption. Library -> Chart.js.
+        3. Component Comparisons (HTML/CSS Cards): Report Info -> Tables comparing suspension, heaters, ACs. Goal -> Compare key features of competing products. Viz -> Side-by-side flexbox cards. Interaction -> Clean, scannable layout. Justification -> More visually appealing and modern than standard HTML tables. Library -> Tailwind CSS.
+        4. Fabrication Process (HTML/CSS Timeline): Report Info -> Step-by-step door installation process. Goal -> Organize a complex procedure. Viz -> Interactive horizontal timeline. Interaction -> Clicking a step reveals details. Justification -> Breaks a complex process into easily digestible chunks. Library -> Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-button.active {
+            color: #C67A53;
+            border-bottom-color: #C67A53;
+        }
+        .nav-button:hover {
+            color: #C67A53;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .section-card {
+            background-color: #FFFFFF;
+            border: 1px solid #EAEAEA;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+        .accent-bg { background-color: #E3DACE; }
+        .accent-text { color: #8C5A40; }
+        .recommended-badge {
+            background-color: #C67A53;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #8C5A40;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #754b33;
+        }
+        .btn-secondary {
+            background-color: #E3DACE;
+            color: #8C5A40;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #d4c4b8;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[#8C5A40]">LTV Unity Upgrade Proposal</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <button onclick="scrollToSection('overview')" class="nav-button active px-3 py-2 rounded-md text-sm font-medium">Overview</button>
+                        <button onclick="scrollToSection('suspension')" class="nav-button px-3 py-2 rounded-md text-sm font-medium">Suspension</button>
+                        <button onclick="scrollToSection('electrical')" class="nav-button px-3 py-2 rounded-md text-sm font-medium">Electrical</button>
+                        <button onclick="scrollToSection('climate')" class="nav-button px-3 py-2 rounded-md text-sm font-medium">Climate/Galley</button>
+                        <button onclick="scrollToSection('fabrication')" class="nav-button px-3 py-2 rounded-md text-sm font-medium">Fabrication</button>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <select onchange="scrollToSection(this.value)" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#C67A53] focus:border-[#C67A53] block w-full p-2.5">
+                        <option value="overview">Overview</option>
+                        <option value="suspension">Suspension</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="climate">Climate/Galley</option>
+                        <option value="fabrication">Fabrication</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        
+        <!-- Overview Section -->
+        <section id="overview" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight accent-text">Project Blueprint: All-Electric LTV Unity</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">Transforming a 2021 LTV Unity into a self-sufficient, all-electric expedition vehicle. This interactive proposal details the four pillars of the conversion, designed to support extended off-grid travel and a demanding mobile office.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="section-card p-6 text-center">
+                    <div class="text-4xl mb-3">⛰️</div>
+                    <h3 class="font-bold text-lg mb-2 accent-text">Chassis Fortification</h3>
+                    <p class="text-sm text-gray-600">Upgrading the suspension to safely manage increased weight and fitting larger tires for enhanced capability.</p>
+                </div>
+                <div class="section-card p-6 text-center">
+                    <div class="text-4xl mb-3">⚡️</div>
+                    <h3 class="font-bold text-lg mb-2 accent-text">24V Electrical Core</h3>
+                    <p class="text-sm text-gray-600">A robust LiFePO4 power system with high-output alternator and solar for true energy independence.</p>
+                </div>
+                <div class="section-card p-6 text-center">
+                    <div class="text-4xl mb-3">❄️</div>
+                    <h3 class="font-bold text-lg mb-2 accent-text">Climate & Galley</h3>
+                    <p class="text-sm text-gray-600">Replacing all propane appliances with efficient electric and diesel-hydronic systems.</p>
+                </div>
+                <div class="section-card p-6 text-center">
+                    <div class="text-4xl mb-3">🛠️</div>
+                    <h3 class="font-bold text-lg mb-2 accent-text">Custom Fabrication</h3>
+                    <p class="text-sm text-gray-600">Adding a rear access door to the pass-through storage for dramatically improved utility.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Suspension Section -->
+        <section id="suspension" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold tracking-tight accent-text mb-4">1. Chassis & Suspension Fortification</h2>
+            <p class="mb-8 text-gray-600 max-w-4xl">The conversion to an all-electric platform adds significant weight. A suspension upgrade is not optional—it's a fundamental safety and engineering requirement to ensure stability and control. This section analyzes the weight changes and compares market-leading solutions to fortify the chassis.</p>
+            
+            <div class="grid lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 section-card p-6">
+                    <h3 class="text-xl font-semibold mb-2 accent-text">Interactive Weight Analysis</h3>
+                    <p class="text-sm text-gray-500 mb-4">This chart visualizes the estimated weight changes from the conversion. The net gain requires a suspension system tuned specifically for the new axle weights to avoid instability and poor handling.</p>
+                    <div class="chart-container">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 accent-bg rounded-lg p-6">
+                     <h3 class="text-xl font-semibold mb-4 accent-text">Recommended Configuration</h3>
+                     <ul class="space-y-4 text-sm">
+                         <li class="flex items-start">
+                             <span class="font-bold w-24 flex-shrink-0">Suspension:</span>
+                             <span><span class="recommended-badge text-xs font-semibold mr-2 px-2 py-0.5 rounded-full">Recommended</span>Agile Offroad Premium RIP Kit</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-bold w-24 flex-shrink-0">Wheels:</span>
+                             <span>Method Race Wheels 901 Dually</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-bold w-24 flex-shrink-0">Tires:</span>
+                             <span>BFGoodrich KO2, LT275/70R17</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-bold w-24 flex-shrink-0">ECU Fix:</span>
+                             <span>RennTech Oversized Tire Module</span>
+                         </li>
+                     </ul>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                 <h3 class="text-xl font-semibold mb-4 accent-text">Suspension Kit Comparison</h3>
+                 <div class="grid md:grid-cols-2 gap-8">
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">Agile Offroad RIP Kit</h4>
+                         <p class="text-xs recommended-badge inline-block px-2 py-0.5 rounded-full mb-3">Recommended</p>
+                         <p class="text-sm text-gray-600 mb-4">Focuses on ride improvement and stability for heavy vehicles. A "set-it-and-forget-it" system tuned to the van's final weight.</p>
+                         <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Shocks:</strong> Agile-Tuned FOX 2.5 Rear, Bilstein B6 Front</li>
+                            <li><strong class="font-semibold">Springs:</strong> Custom-rate rear leaf pack based on final axle weight</li>
+                            <li><strong class="font-semibold">Adjustability:</strong> Pre-tuned by Agile, not user-adjustable</li>
+                         </ul>
+                     </div>
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">Van Compass Stage 4.3</h4>
+                         <p class="text-xs bg-gray-200 text-gray-800 inline-block px-2 py-0.5 rounded-full mb-3">Alternative</p>
+                         <p class="text-sm text-gray-600 mb-4">Offers staged upgrades with an emphasis on on-the-fly adjustability, ideal for users who want to tune the ride for different conditions.</p>
+                          <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Shocks:</strong> Falcon 3.3 Fast Adjust (Front & Rear)</li>
+                            <li><strong class="font-semibold">Springs:</strong> Opti-Rate rear leaf pack for a range of weights</li>
+                            <li><strong class="font-semibold">Adjustability:</strong> Wide range of user compression damping adjustment</li>
+                         </ul>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Electrical Section -->
+        <section id="electrical" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold tracking-tight accent-text mb-4">2. 24-Volt Electrical Core</h2>
+            <p class="mb-8 text-gray-600 max-w-4xl">To power a mobile office and all-electric appliances, a 24V architecture is superior for its efficiency and lower current draw. This section breaks down the significant daily energy demand and specifies the components needed for a robust, reliable power system.</p>
+
+            <div class="grid lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 section-card p-6">
+                    <h3 class="text-xl font-semibold mb-2 accent-text">Daily Power Audit</h3>
+                     <p class="text-sm text-gray-500 mb-2">This chart shows the estimated daily energy consumption. The system is designed to handle a maximum load of ~7,400 Wh per day. Use the buttons to toggle between base load and maximum load including air conditioning.</p>
+                     <div class="flex justify-center space-x-2 mb-2">
+                        <button id="baseLoadBtn" class="btn-primary px-4 py-1.5 text-sm rounded-md">Base Load</button>
+                        <button id="maxLoadBtn" class="btn-secondary px-4 py-1.5 text-sm rounded-md">Max Load (w/ AC)</button>
+                     </div>
+                    <div class="chart-container">
+                        <canvas id="powerAuditChart"></canvas>
+                    </div>
+                </div>
+                 <div class="lg:col-span-2 accent-bg rounded-lg p-6">
+                     <h3 class="text-xl font-semibold mb-4 accent-text">Recommended Bill of Materials</h3>
+                     <ul class="space-y-3 text-sm">
+                         <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Batteries:</span>
+                             <span>3 x Trophy 24V 320Ah (960Ah @ 24V Total)</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Inverter:</span>
+                             <span>Victron MultiPlus-II 24/3000</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Alternator:</span>
+                             <span>Nations 24V 140A Kit w/ Wakespeed WS500</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Solar:</span>
+                             <span>1000W Array (5 x 200W Panels)</span>
+                         </li>
+                          <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Controller:</span>
+                             <span>Victron SmartSolar MPPT 250/70</span>
+                         </li>
+                         <li class="flex items-start">
+                             <span class="font-semibold w-28 flex-shrink-0">Monitoring:</span>
+                             <span>Victron Cerbo GX & Lynx Smart BMS</span>
+                         </li>
+                     </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Climate/Galley Section -->
+        <section id="climate" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold tracking-tight accent-text mb-4">3. Climate & Galley Modernization</h2>
+            <p class="mb-8 text-gray-600 max-w-4xl">This phase removes all propane appliances, replacing them with a modern suite of all-electric and diesel-fired systems. This enhances safety, convenience, and off-grid capability, all powered by the new electrical core.</p>
+
+            <div class="mb-8">
+                 <h3 class="text-xl font-semibold mb-4 accent-text">Hydronic Heating System Comparison</h3>
+                 <div class="grid md:grid-cols-2 gap-8">
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">Espar Hydronic S3 D5E</h4>
+                         <p class="text-xs recommended-badge inline-block px-2 py-0.5 rounded-full mb-3">Recommended</p>
+                         <p class="text-sm text-gray-600 mb-4">Latest generation unit with "stepless" heat modulation and a near-silent fuel pump for superior comfort and acoustics.</p>
+                         <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Heat Output:</strong> 5 kW (17,000 BTU)</li>
+                            <li><strong class="font-semibold">Key Feature:</strong> Variable output for stable temperature, very quiet operation.</li>
+                         </ul>
+                     </div>
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">Webasto Thermo Top Evo</h4>
+                         <p class="text-xs bg-gray-200 text-gray-800 inline-block px-2 py-0.5 rounded-full mb-3">Alternative</p>
+                         <p class="text-sm text-gray-600 mb-4">A proven and highly reliable unit often sold in comprehensive kits. A robust and dependable alternative.</p>
+                          <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Heat Output:</strong> 5 kW (17,000 BTU)</li>
+                            <li><strong class="font-semibold">Key Feature:</strong> Fast heat-up time, long history of reliability.</li>
+                         </ul>
+                     </div>
+                 </div>
+            </div>
+            
+            <div class="mb-8">
+                 <h3 class="text-xl font-semibold mb-4 accent-text">High-Efficiency DC Air Conditioner Comparison</h3>
+                 <div class="grid md:grid-cols-2 gap-8">
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">Nomadic Cooling X3 (24V)</h4>
+                         <p class="text-xs recommended-badge inline-block px-2 py-0.5 rounded-full mb-3">Recommended</p>
+                         <p class="text-sm text-gray-600 mb-4">A market leader known for high cooling capacity with very low power draw in eco mode. Ideal for off-grid battery use.</p>
+                         <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Cooling:</strong> 12,480 BTU</li>
+                            <li><strong class="font-semibold">Power Draw (Eco):</strong> ~576W</li>
+                         </ul>
+                     </div>
+                     <div class="section-card p-6">
+                         <h4 class="font-bold text-lg">VELIT 3000R (24V)</h4>
+                         <p class="text-xs bg-gray-200 text-gray-800 inline-block px-2 py-0.5 rounded-full mb-3">Alternative</p>
+                         <p class="text-sm text-gray-600 mb-4">A solid competitor offering comparable performance in a native 24V rooftop package.</p>
+                          <ul class="text-sm space-y-2">
+                            <li><strong class="font-semibold">Cooling:</strong> 10,000 BTU</li>
+                            <li><strong class="font-semibold">Power Draw (Eco):</strong> Not specified, but likely similar to Nomadic.</li>
+                         </ul>
+                     </div>
+                 </div>
+            </div>
+             <div class="accent-bg rounded-lg p-6">
+                 <h3 class="text-xl font-semibold mb-4 accent-text">Recommended Galley Appliances</h3>
+                 <div class="grid sm:grid-cols-2 gap-6">
+                     <div>
+                         <p class="font-bold">Refrigerator</p>
+                         <p class="text-sm text-gray-700">Dometic DMC4101 10 cu. ft. 12V Compressor Fridge</p>
+                     </div>
+                     <div>
+                         <p class="font-bold">Cooktop</p>
+                         <p class="text-sm text-gray-700">Two-burner 120V AC Induction Cooktop (e.g., True Induction)</p>
+                     </div>
+                 </div>
+             </div>
+        </section>
+
+        <!-- Fabrication Section -->
+        <section id="fabrication" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold tracking-tight accent-text mb-4">4. Custom Fabrication & Integration</h2>
+            <p class="mb-8 text-gray-600 max-w-4xl">The final phase involves skilled body modification to enhance utility and a rigorous commissioning process to ensure all new systems function as a cohesive, reliable whole.</p>
+            
+            <div class="section-card p-6 md:p-8">
+                <h3 class="text-xl font-semibold mb-6 accent-text text-center">Protocol: Rear Access Door Installation</h3>
+                <div class="relative">
+                    <div class="absolute left-0 top-1/2 w-full h-0.5 bg-gray-300" aria-hidden="true"></div>
+                    <div class="relative grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-[#C67A53] text-white font-bold text-lg z-10 relative">1</div>
+                            <p class="mt-3 font-semibold">Door Sourcing</p>
+                            <p class="text-xs text-gray-500">Select largest possible Lippert baggage door.</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-[#C67A53] text-white font-bold text-lg z-10 relative">2</div>
+                            <p class="mt-3 font-semibold">Structural Frame</p>
+                            <p class="text-xs text-gray-500">Build internal aluminum frame to reinforce the opening.</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-[#C67A53] text-white font-bold text-lg z-10 relative">3</div>
+                            <p class="mt-3 font-semibold">Cut Opening</p>
+                            <p class="text-xs text-gray-500">Tape fiberglass and cut precisely with a fine-toothed blade.</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-[#C67A53] text-white font-bold text-lg z-10 relative">4</div>
+                            <p class="mt-3 font-semibold">Seal & Install</p>
+                            <p class="text-xs text-gray-500">Use butyl tape and ProFlex RV sealant for a waterproof finish.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold mb-4 accent-text text-center">Final Commissioning Checklist</h3>
+                    <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-center">
+                        <li class="accent-bg rounded-md p-3">✅ Final CAT Scale Weighing</li>
+                        <li class="accent-bg rounded-md p-3">✅ Suspension Re-Torque</li>
+                        <li class="accent-bg rounded-md p-3">✅ Full Electrical Load Test</li>
+                        <li class="accent-bg rounded-md p-3">✅ Hydronic System Purge & Test</li>
+                        <li class="accent-bg rounded-md p-3">✅ Water Intrusion Test</li>
+                        <li class="accent-bg rounded-md p-3">✅ All Systems Go</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="mt-16 border-t border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-gray-500">
+            <p>This interactive proposal is a technical blueprint for estimation purposes. All components are subject to availability and final client consultation.</p>
+            <p>&copy; 2025 Custom Vehicle Upfitters. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const weightData = {
+        labels: ['Weight Balance'],
+        datasets: [
+            {
+                label: 'Weight Removed (lbs)',
+                data: [340],
+                backgroundColor: 'rgba(211, 143, 107, 0.7)',
+                borderColor: 'rgba(211, 143, 107, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Weight Added (lbs)',
+                data: [807],
+                backgroundColor: 'rgba(140, 90, 64, 0.7)',
+                borderColor: 'rgba(140, 90, 64, 1)',
+                borderWidth: 1
+            }
+        ]
+    };
+    
+    const powerAuditDataBase = {
+        labels: ['Mobile Office', 'Baseline RV', 'System Losses'],
+        datasets: [{
+            label: 'Watt-hours (Wh)',
+            data: [3430, 1243, 400],
+            backgroundColor: [
+              'rgba(140, 90, 64, 0.8)',
+              'rgba(198, 122, 83, 0.8)',
+              'rgba(227, 218, 206, 0.8)'
+            ],
+            borderColor: '#FDFBF8',
+            borderWidth: 2
+        }]
+    };
+
+    const powerAuditDataMax = {
+        labels: ['Mobile Office', 'Baseline RV', 'Air Conditioning', 'System Losses'],
+        datasets: [{
+            label: 'Watt-hours (Wh)',
+            data: [3430, 1243, 2304, 400],
+            backgroundColor: [
+                'rgba(140, 90, 64, 0.8)',
+                'rgba(198, 122, 83, 0.8)',
+                'rgba(90, 126, 150, 0.8)',
+                'rgba(227, 218, 206, 0.8)'
+            ],
+            borderColor: '#FDFBF8',
+            borderWidth: 2
+        }]
+    };
+
+    let weightChart, powerAuditChart;
+
+    function createWeightChart() {
+        const ctx = document.getElementById('weightChart').getContext('2d');
+        weightChart = new Chart(ctx, {
+            type: 'bar',
+            data: weightData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Pounds (lbs)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createPowerAuditChart(initialData) {
+        const ctx = document.getElementById('powerAuditChart').getContext('2d');
+        powerAuditChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: initialData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    title: { display: false },
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += new Intl.NumberFormat().format(context.parsed) + ' Wh';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePowerChart(data, buttonToShow) {
+        powerAuditChart.data = data;
+        powerAuditChart.update();
+        document.getElementById('baseLoadBtn').classList.toggle('btn-primary', buttonToShow === 'base');
+        document.getElementById('baseLoadBtn').classList.toggle('btn-secondary', buttonToShow !== 'base');
+        document.getElementById('maxLoadBtn').classList.toggle('btn-primary', buttonToShow === 'max');
+        document.getElementById('maxLoadBtn').classList.toggle('btn-secondary', buttonToShow !== 'max');
+    }
+
+    document.getElementById('baseLoadBtn').addEventListener('click', () => updatePowerChart(powerAuditDataBase, 'base'));
+    document.getElementById('maxLoadBtn').addEventListener('click', () => updatePowerChart(powerAuditDataMax, 'max'));
+
+    createWeightChart();
+    createPowerAuditChart(powerAuditDataBase);
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('onclick').includes(`'${id}'`)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-20% 0px -80% 0px', threshold: 0 });
+
+    document.querySelectorAll('section').forEach(section => {
+        observer.observe(section);
+    });
+
+});
+
+function scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        window.scrollTo({
+            top: section.offsetTop - 64, 
+            behavior: 'smooth'
+        });
+        
+        const mobileNav = document.querySelector('.md\\:hidden select');
+        if (mobileNav) {
+            mobileNav.value = sectionId;
+        }
+    }
+}
+</script>
+</body>
+</html>
